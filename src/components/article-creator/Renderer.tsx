@@ -140,24 +140,26 @@ const customParsers: Record<
     if (content.length === 0) {
       return "<table></table>";
     }
+    const cellClass =
+      "border border-gray-300 px-3 py-1.5 text-center whitespace-nowrap";
     const rows = content.map((row, index) => {
       if (withHeadings && index === 0) {
-        return `<tr class="divide-x-[1px]">${row.reduce(
-          (acc, cell) => acc + `<th>${parseLatex(cell)}</th>`,
+        return `<tr>${row.reduce(
+          (acc, cell) => acc + `<th class="${cellClass}">${parseLatex(cell)}</th>`,
           "",
         )}</tr>`;
       }
 
       // For other rows, use <td> tags
-      return `<tr class="divide-x-[1px]">${row.reduce(
-        (acc, cell) => acc + `<td>${parseLatex(cell)}</td>`,
+      return `<tr>${row.reduce(
+        (acc, cell) => acc + `<td class="${cellClass}">${parseLatex(cell)}</td>`,
         "",
       )}</tr>`;
     });
     const thead = withHeadings ? `<thead>${rows.shift()}</thead>` : "";
     const tbody = `<tbody>${rows.join("")}</tbody>`;
 
-    return `<table>${thead}${tbody}</table>`;
+    return `<div class="overflow-x-auto"><table class="border-collapse border border-gray-300">${thead}${tbody}</table></div>`;
   },
 
   list: (data, _config) => {
