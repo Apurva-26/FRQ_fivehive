@@ -29,6 +29,15 @@ export const katexMacros = {
   "\\qty": "#1\\,\\mathrm{#2}",
 };
 
+function escapeHtml(text: string): string {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 // derived from advancedtextbox
 function parseLatex(text: string): string {
   const decoded = decodeEntities(text);
@@ -44,7 +53,7 @@ function parseLatex(text: string): string {
           macros: katexMacros,
         });
       }
-      return part;
+      return escapeHtml(part);
     })
     .join("");
 }
@@ -140,24 +149,26 @@ const customParsers: Record<
     if (content.length === 0) {
       return "<table></table>";
     }
+    const cellClass =
+      "border border-black px-3 py-1.5 text-center whitespace-nowrap";
     const rows = content.map((row, index) => {
       if (withHeadings && index === 0) {
-        return `<tr class="divide-x-[1px]">${row.reduce(
-          (acc, cell) => acc + `<th>${parseLatex(cell)}</th>`,
+        return `<tr>${row.reduce(
+          (acc, cell) => acc + `<th class="${cellClass}">${parseLatex(cell)}</th>`,
           "",
         )}</tr>`;
       }
 
       // For other rows, use <td> tags
-      return `<tr class="divide-x-[1px]">${row.reduce(
-        (acc, cell) => acc + `<td>${parseLatex(cell)}</td>`,
+      return `<tr>${row.reduce(
+        (acc, cell) => acc + `<td class="${cellClass}">${parseLatex(cell)}</td>`,
         "",
       )}</tr>`;
     });
     const thead = withHeadings ? `<thead>${rows.shift()}</thead>` : "";
     const tbody = `<tbody>${rows.join("")}</tbody>`;
 
-    return `<table>${thead}${tbody}</table>`;
+    return `<div class="overflow-x-auto" tabindex="0" role="region" aria-label="Scrollable table"><table class="border-collapse border border-black">${thead}${tbody}</table></div>`;
   },
 
   list: (data, _config) => {
