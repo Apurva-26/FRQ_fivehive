@@ -39,7 +39,17 @@ function escapeHtml(text: string): string {
 }
 
 // derived from advancedtextbox
-function parseLatex(text: string): string {
+//
+// `transformText` is applied to the non-LaTeX segments only. Paragraphs, headers
+// and list items legitimately store EditorJS inline markup (<b>, <mark>, <a>, an
+// inline toolbar is enabled on all three), so they pass it through untouched.
+// Table cells have no inline toolbar and are plain text, so the table parser
+// passes `escapeHtml`. That has to happen in here rather than around the result,
+// or it would escape KaTeX's own generated HTML too.
+function parseLatex(
+  text: string,
+  transformText: (part: string) => string = (part) => part,
+): string {
   const decoded = decodeEntities(text);
 
   return decoded
@@ -53,7 +63,7 @@ function parseLatex(text: string): string {
           macros: katexMacros,
         });
       }
-      return escapeHtml(part);
+      return transformText(part);
     })
     .join("");
 }
@@ -149,19 +159,21 @@ const customParsers: Record<
     if (content.length === 0) {
       return "<table></table>";
     }
-    const cellClass =
-      "border border-black px-3 py-1.5 text-center whitespace-nowrap";
+    const cellClass = "border border-black px-3 py-1.5 text-center";
     const rows = content.map((row, index) => {
       if (withHeadings && index === 0) {
         return `<tr>${row.reduce(
-          (acc, cell) => acc + `<th class="${cellClass}">${parseLatex(cell)}</th>`,
+          (acc, cell) =>
+            acc +
+            `<th class="${cellClass}">${parseLatex(cell, escapeHtml)}</th>`,
           "",
         )}</tr>`;
       }
 
       // For other rows, use <td> tags
       return `<tr>${row.reduce(
-        (acc, cell) => acc + `<td class="${cellClass}">${parseLatex(cell)}</td>`,
+        (acc, cell) =>
+          acc + `<td class="${cellClass}">${parseLatex(cell, escapeHtml)}</td>`,
         "",
       )}</tr>`;
     });
